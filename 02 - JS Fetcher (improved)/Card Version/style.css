@@ -1,0 +1,62 @@
+*,
+:root,
+::after,
+::before {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  background-color: #f4f4f4;
+  color: #333;
+}
+h1 {
+  text-align: center;
+  font-size: 2rem;
+  color: #333;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+th,
+td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+th {
+  text-align: center;
+  background-color: #f2f2f2;
+}
+
+tr:nth-child(odd) {
+  background-color: #f9f9f9;
+}
+
+button {
+  display: block;
+  /* width: 100%; */
+  padding: 12px 50px;
+  font-size: 1.25rem;
+  /* em -  */
+  /* rem - root em */
+  background-color: #007bff;
+  border: none;
+}
+button:hover {
+  background-color: #0056b3;
+  cursor: pointer;
+  border: 1px solid #05172b;
+}
+
+.user-card {
+  margin: 20px auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border: 1px solid #05172b;
+}
