@@ -7,7 +7,7 @@ async function fetchUsers() {
     const users = await response.json();
     const tableHTML = `
       <h2>Users List</h2>
-      <div class="user-grid">
+      <div class="user-cards">
       ${users
         .map(
           (user) => `
