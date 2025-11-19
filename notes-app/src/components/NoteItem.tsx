@@ -4,7 +4,7 @@ const lora = Lora({
   variable: "--font-lora-sans",
   subsets: ["latin"],
 });
-type Note = {
+export type Note = {
   id: number;
   title: string;
   description: string;
