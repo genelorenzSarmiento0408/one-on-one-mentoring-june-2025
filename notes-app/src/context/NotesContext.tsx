@@ -8,18 +8,22 @@ import {
   useEffect,
   useCallback,
 } from "react";
-import { Note } from "../components/NoteItem";
+import { FormNoteData, Note } from "@/types/note";
 
 interface NotesContextType {
   notes: Note[];
-  addNote: (note: Note) => void;
+  addNote: (note: FormNoteData) => void;
   setNotes: (notes: Note[]) => void;
+  deleteNote: (index: number) => void;
+  updateNote: (index: number, updatedNote: Note) => void;
 }
 
 export const NotesContext = createContext<NotesContextType>({
   notes: [],
   addNote: () => {},
   setNotes: () => {},
+  deleteNote: () => {},
+  updateNote: () => {},
 });
 
 export const NotesProvider = ({ children }: { children: ReactNode }) => {
@@ -44,7 +48,7 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
     fetchNotes();
   }, [fetchNotes]);
 
-  const addNote = async (note: Note) => {
+  const addNote = async (note: FormNoteData) => {
     try {
       const response = await fetch("/api/notes", {
         method: "POST",
@@ -64,10 +68,48 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error adding note:", error);
     }
   };
+  //
+  const updateNote = async (index: number, updatedNote: Note) => {
+    try {
+      const response = await fetch(`/api/notes/${index}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedNote),
+      });
+      if (response.ok) {
+        fetchNotes();
+      } else {
+        console.error("Failed to update note");
+      }
+    } catch (error) {
+      console.error("Error updating note:", error);
+    }
+  };
+
+  const deleteNote = async (index: number) => {
+    try {
+      const response = await fetch(`/api/notes/${index}`, {
+        method: "DELETE",
+      });
+      if (response.ok) {
+        fetchNotes();
+      }
+    } catch (error) {
+      console.error("Error deleting note:", error);
+    }
+  };
+  const value: NotesContextType = {
+    notes,
+    addNote,
+    setNotes,
+    deleteNote,
+    updateNote,
+  };
+
   return (
-    <NotesContext.Provider value={{ notes, addNote, setNotes }}>
-      {children}
-    </NotesContext.Provider>
+    <NotesContext.Provider value={value}>{children}</NotesContext.Provider>
   );
 };
 
