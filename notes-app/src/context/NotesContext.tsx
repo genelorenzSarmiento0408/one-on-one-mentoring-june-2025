@@ -12,28 +12,42 @@ import { FormNoteData, Note } from "@/types/note";
 
 interface NotesContextType {
   notes: Note[];
+  isLoading: boolean;
   addNote: (note: FormNoteData) => void;
   setNotes: (notes: Note[]) => void;
-  deleteNote: (index: number) => void;
-  updateNote: (index: number, updatedNote: Note) => void;
+  deleteNote: (id: string, index: number) => void;
+  updateNote: (id: string, index: number, updatedNote: FormNoteData) => void;
+  togglePin: (id: string, isPinned: boolean) => void;
 }
 
 export const NotesContext = createContext<NotesContextType>({
   notes: [],
+  isLoading: false,
   addNote: () => {},
   setNotes: () => {},
   deleteNote: () => {},
   updateNote: () => {},
+  togglePin: () => {},
 });
 
 export const NotesProvider = ({ children }: { children: ReactNode }) => {
+  console.log("--- NOTES PROVIDER IS MOUNTING ---"); // <-- Check for this log!
   const [notes, setNotes] = useState<Note[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const fetchNotes = useCallback(async () => {
+    setIsLoading(true);
     try {
-      const response = await fetch("/api/notes");
+      const response = await fetch("/api/notes", { cache: "no-store" });
+      console.log("fetch received");
+      console.log(response);
+      if (!response.ok) throw new Error("failed to fetch notes");
       const data = await response.json();
-      const mappedNotes: Note[] = data.notes.map((note: Note) => ({
+      console.log(data);
+      const mappedNotes: Note[] = data.map((note: Note) => ({
+        id: note._id,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        isPinned: note.isPinned,
         title: note.title,
         description: note.description,
       }));
@@ -69,9 +83,14 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   //
-  const updateNote = async (index: number, updatedNote: Note) => {
+  const updateNote = async (
+    id: string,
+    index: number,
+    updatedNote: FormNoteData
+  ) => {
     try {
-      const response = await fetch(`/api/notes/${index}`, {
+      console.log(updatedNote);
+      const response = await fetch(`/api/notes/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -87,10 +106,32 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error updating note:", error);
     }
   };
-
-  const deleteNote = async (index: number) => {
+  const togglePin = async (id: string) => {
     try {
-      const response = await fetch(`/api/notes/${index}`, {
+      const note = notes.find((n) => n.id === id);
+      if (!note) {
+        console.error("Note not found");
+        return;
+      }
+
+      const response = await fetch(`/api/notes/${id}/pin`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isPinned: !note.isPinned }),
+      });
+      if (response.ok) {
+        fetchNotes();
+      }
+    } catch (error) {
+      console.error("Error toggling pin status:", error);
+    }
+  };
+
+  const deleteNote = async (id: string, index: number) => {
+    try {
+      const response = await fetch(`/api/notes/${id}`, {
         method: "DELETE",
       });
       if (response.ok) {
@@ -102,10 +143,12 @@ export const NotesProvider = ({ children }: { children: ReactNode }) => {
   };
   const value: NotesContextType = {
     notes,
+    isLoading,
     addNote,
     setNotes,
     deleteNote,
     updateNote,
+    togglePin,
   };
 
   return (

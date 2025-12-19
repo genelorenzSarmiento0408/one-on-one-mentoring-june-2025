@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useState } from "react";
 import { useNotes } from "@/context/NotesContext";
-import { Note } from "@/types/note";
+import { FormNoteData, Note } from "@/types/note";
 import { title } from "process";
 
 export default function NoteForm() {
@@ -21,9 +21,15 @@ export default function NoteForm() {
   };
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-
-    if (note.title || note.description) {
-      addNote(note);
+    const title = note.title.trim();
+    const description = note.description.trim();
+    const newNote: FormNoteData = {
+      title,
+      description,
+    };
+    if (title || description) {
+      addNote(newNote);
+      setNote({ title: "", description: "" });
     }
 
     // the latest note to be the first in the array
@@ -49,6 +55,12 @@ export default function NoteForm() {
         value={note.description}
         onChange={handleChange}
       ></textarea>
+      <button
+        type="submit"
+        className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md"
+      >
+        Add Note
+      </button>
     </form>
   );
 }

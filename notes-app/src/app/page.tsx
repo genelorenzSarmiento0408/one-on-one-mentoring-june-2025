@@ -1,28 +1,38 @@
 "use client";
 import NoteForm from "@/components/NoteForm";
 import NoteItem from "@/components/NoteItem";
+import NoteList from "@/components/NoteList";
+import SearchBar from "@/components/SearchBar";
+import { useNotes } from "@/context/NotesContext";
 import Image from "next/image";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useMemo } from "react";
 
 export default function Home() {
-  // the latest note to be the first in the array
-  // setNotes([{ id: Date.now(), title: noteText.trim(), description: "" }, ...notes]);
-  // console.log(notes);
-  // };
-  // useEffect(() => {
-  //   if (typeof window !== "undefined") {
-  //     if (notes.length === 0) {
-  //       const storedNotes = localStorage.getItem("notes");
-  //       if (storedNotes) {
-  //         setNotes(JSON.parse(storedNotes));
-  //       }
-  //       return;
-  //     }
-  //     const notesJson = JSON.stringify(notes);
-  //     localStorage.setItem("notes", notesJson);
-  //     // console.log("Notes updated:", notes);
-  //   }
-  // }, [notes]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const { notes, isLoading, addNote, deleteNote, updateNote, togglePin } =
+    useNotes();
+  const filteredNotes = useMemo(() => {
+    let results = notes;
+    if (searchQuery.trim()) {
+      results = notes.filter((note) => {
+        const query = searchQuery.toLocaleLowerCase();
+        return (
+          note.title.toLocaleLowerCase().includes(query) ||
+          note.description.toLocaleLowerCase().includes(query)
+        );
+      });
+    }
+
+    return [...results].sort((a, b) => {
+      if (a.isPinned === b.isPinned) {
+        return (
+          new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+        );
+      }
+      return a.isPinned ? -1 : 1;
+    });
+  }, [notes, searchQuery]);
+
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -48,7 +58,36 @@ export default function Home() {
         </ol>
 
         <div className="flex gap-4 items-center flex-row sm:flex-col flex-wrap">
-          <NoteItem />
+          <SearchBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+          />
+          {/* <NoteItem notes={notes} onDeleteNote={deleteNote} onUpdateNote={updateNote} /> */}
+          {isLoading ? (
+            <p className="text-center text-blue-500 text-lg">Loading...</p>
+          ) : (
+            <NoteList
+              notes={filteredNotes}
+              onDeleteNote={async (id: string, index: number) =>
+                deleteNote(id, index)
+              }
+              onUpdateNote={async (
+                id: string,
+                index: number,
+                newTitle: string,
+                newDescription: string
+              ) =>
+                updateNote(id, index, {
+                  title: newTitle,
+                  description: newDescription,
+                })
+              }
+              isLoading={isLoading}
+              onTogglePin={async (id: string, isPinned: boolean) =>
+                togglePin(id, isPinned)
+              }
+            />
+          )}
           <NoteForm />
         </div>
       </main>
